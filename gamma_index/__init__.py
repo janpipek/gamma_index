@@ -1,4 +1,4 @@
-__all__ == [ "gamma_matrix", "gamma_matrix_pass"]
+__all__ = [ "gamma_matrix", "gamma_matrix_pass"]
 
 
 import numpy as np
@@ -10,7 +10,7 @@ def gamma_matrix(rm, tm, dta=1.0, dd=0.05):
     :param rm: reference matrix (relative values assumed)
     :param tm: tested matrix (relative values assumed)
     :param dta: maximum distance-to-agreement (in voxels)
-    :param dd: maximum dose difference (absolute, not mms!)
+    :param dd: maximum dose difference (absolute, not percent!)
 
     :type rm: numpy.ndarray
     :type tm: numpy.ndarray
