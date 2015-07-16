@@ -20,9 +20,15 @@ static inline int matrix_offset(int ndim, int* index, int* strides) {
 }
 
 static inline int add_indices(int ndim, int* index1, int* index2, int* result) {
+	/* print_index(ndim, index1);
+	printf("+");
+	print_index(ndim, index2);
+	printf("="); */
 	for (int i = 0; i < ndim; i++) {
 		result[i] = index1[i] + index2[i];
 	}
+	/* print_index(ndim, result);
+	printf("\n"); */
 }
 
 static inline double squared(double x) {
@@ -34,6 +40,7 @@ static inline double index_size_squared(int ndim, int* index) {
 	for (int i = 0; i < ndim; i++) {
 		sum += squared(index[i]);
 	}
+	return sum;
 }
 
 static inline int inbounds(int ndim, int* index, int* shape) {
@@ -52,16 +59,21 @@ static inline int size(int ndim, int* index) {
 	return product;
 }
 
-static inline double gamma_index_point_static(int ndim, int* shape, int* strides, int* first_index, double* first_matrix, double* second_matrix) {
-	printf("Calculating ");
+static inline double gamma_index_point(int ndim, int* shape, int* strides, int* first_index, double* first_matrix, double* second_matrix) {
+	/* printf("Calculating ");
 	print_index(ndim, first_index);
-	printf("...\n");
+	printf("...\n"); */
 
 	double dose1 = first_matrix[matrix_offset(ndim, first_index, strides)];
-	double min = abs(dose1 - second_matrix[matrix_offset(ndim, first_index, strides)]);
+	// printf("dose1=%f\n", dose1);
+	double dose2 = second_matrix[matrix_offset(ndim, first_index, strides)];
+	// printf("dose2=%f\n", dose2);
+	double min = fabs(dose1 - dose2);
+	// printf("min=%f\n", min);
 	int max_d = (int)min;
 	double min_gamma = squared(min);
-	double range_d = 2 * max_d + 1;	
+	// printf("min_gamma=%f\n", min_gamma);
+	int range_d = 2 * max_d + 1;	
 	int i = 0;
 	int j = 0;
 	int tot_attempts = 1;
@@ -78,6 +90,8 @@ static inline double gamma_index_point_static(int ndim, int* shape, int* strides
 	}
 	tot_attempts *= range_d;
 
+	// printf("totattempts=%d\n", tot_attempts);
+
 	// Running index to start with (all to -max_d)
 	running_index = (int*)malloc(sizeof(int) * ndim);
 	for (i = 0; i < ndim; i++) {
@@ -87,24 +101,31 @@ static inline double gamma_index_point_static(int ndim, int* shape, int* strides
 	second_index = (int*)malloc(sizeof(int) * ndim);
 	for (j = 0; j < tot_attempts; j++) {
 		add_indices(ndim, first_index, running_index, second_index);
-		print_index(ndim, second_index);
+		// print_index(ndim, second_index);
+		// printf("\n");
 		if (!inbounds(ndim, second_index, shape)) {
-			printf("- out\n");
+			// printf("- out\n");
 		} else {
 			double dose2 = second_matrix[matrix_offset(ndim, second_index, strides)];
+			// printf("[dose %f]", diff2);
 			double diff2 = squared(dose1 - dose2);
-			double gamma = diff2 + index_size_squared(ndim, running_index);
+			
+			// printf("[diff %f]", diff2);
+			double dd2 = index_size_squared(ndim, running_index);
+			// printf("[dd %f]", dd2);
+			double gamma = diff2 + dd2; //index_size_squared(ndim, running_index);
 
-			printf("= %f\n", gamma);
+			// printf("= %f\n", gamma);
 			if (gamma < min_gamma) {
 				min_gamma = gamma;
+				// printf("min_gamma=%f\n", min_gamma);
 			}
 		}
 
 		running_index[ndim - 1]++;
 	 	i = ndim - 1;
 		for (i = ndim - 1; i > 0; i--) {
-			if (running_index[i] == max_d) {
+			if (running_index[i] > max_d) {
 				running_index[i] = -max_d;
 				running_index[i - 1]++;
 			} else {
@@ -113,6 +134,7 @@ static inline double gamma_index_point_static(int ndim, int* shape, int* strides
 		}
 	}
 	
+	free(second_index);
 	free(running_index);
 	free(running_strides);
 	return min_gamma;
@@ -155,7 +177,7 @@ void gamma_index(int ndim, int* shape, double* first_matrix, double* second_matr
 
 	// Calculate gammas
 	for (int j = 0; j < total_size; j++) {		
-		result[j] = sqrt(gamma_index_point_static(ndim, shape, strides, running_index, first_matrix_rel, second_matrix_rel)) / dta;
+		result[j] = sqrt(gamma_index_point(ndim, shape, strides, running_index, first_matrix_rel, second_matrix_rel)) / dta;
 
 		running_index[ndim - 1]++;
 	 	i = ndim - 1;
