@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+  * @short Print index (as "[1,2,3]").
+  *
+  * Mostly for debugging purposes.
+  */
 static inline void print_index(int ndim, int* index) {
 	printf("[");
 	for (int i = 0; i <  ndim -1; i++) {
@@ -10,7 +15,9 @@ static inline void print_index(int ndim, int* index) {
 	printf("%d]", index[ndim-1]);
 }
 
-// OK
+/**
+  * @short Calculate offset of a complicated index in a linearized array.
+  */
 static inline int matrix_offset(int ndim, int* index, int* strides) {
 	int offset = 0;
 	for (int i = 0; i < ndim; i++) {
@@ -19,7 +26,15 @@ static inline int matrix_offset(int ndim, int* index, int* strides) {
 	return offset;
 }
 
-static inline int add_indices(int ndim, int* index1, int* index2, int* result) {
+/**
+  * @short Sum two arrays of ints (indices).
+  * 
+  * @param [in] ndim Dimensionality od indices
+  * @param [in] index1 First index
+  * @param [in] index2 Second index
+  * @param [out] result Where to store result (must be allocated)
+  */
+static inline void add_indices(int ndim, int* index1, int* index2, int* result) {
 	/* print_index(ndim, index1);
 	printf("+");
 	print_index(ndim, index2);
@@ -35,6 +50,9 @@ static inline double squared(double x) {
 	return x * x;
 }
 
+/**
+  * @short Square of the norm of int array.
+  */
 static inline double index_size_squared(int ndim, int* index) {
 	double sum = 0;
 	for (int i = 0; i < ndim; i++) {
@@ -43,6 +61,9 @@ static inline double index_size_squared(int ndim, int* index) {
 	return sum;
 }
 
+/**
+  * @short Whether index is in the bounds of matrix.
+  */
 static inline int inbounds(int ndim, int* index, int* shape) {
 	for (int i = 0; i < ndim; i++) {
 		if (index[i] < 0) return 0;
@@ -51,14 +72,29 @@ static inline int inbounds(int ndim, int* index, int* shape) {
 	return 1;
 }
 
-static inline int size(int ndim, int* index) {
+/**
+  * @short Product of the int array elements.
+  * 
+  * Used for calculating total number of matrix elements.
+  */
+static inline int size(int ndim, int* shape) {
 	int product = 1;
 	for (int i = 0; i < ndim; i++) {
-		product *= index[i];
+		product *= shape[i];
 	}
 	return product;
 }
 
+/**
+  * @short Calculate gamma index value for one point.
+  * 
+  * @param [in] ndim Dimensionality of the matrices
+  * @param [in] shape Shape of the matrices
+  * @param [in] strides How many elements in linearized array mean increase of 1 in each dimension.
+  * @param [in] first_index Index of the point in the first matrix (fixed)
+  * @param [in] first_matrix First matrix (relative to dd/dta)
+  * @param [in] second_matrix Second matrix (relative to dd/dta)
+  */
 static inline double gamma_index_point(int ndim, int* shape, int* strides, int* first_index, double* first_matrix, double* second_matrix) {
 	/* printf("Calculating ");
 	print_index(ndim, first_index);
@@ -140,6 +176,17 @@ static inline double gamma_index_point(int ndim, int* shape, int* strides, int* 
 	return min_gamma;
 }
 
+/**
+  * @short Calculate gamma index of two n-dimensional matrices of the same shape.
+  *
+  * @param [in] ndim - dimensionality of the ndim
+  * @param [in] shape - shape of the matrices
+  * @param [in] first_matrix - reference matrix (of shape shape)
+  * @param [in] second_matrix - second matrix (of shape shape)
+  * @param [out] result - matrix to store results in (must be pre-allocated)
+  * @param [in] dd - dose-difference parameter of the analysis
+  * @param [in] dta - distance-to-agreement parameter of the analysis
+  */
 void gamma_index(int ndim, int* shape, double* first_matrix, double* second_matrix, double* result, double dd, double dta) {
 	double rel_dd = dd / dta;
 	double* first_matrix_rel;
@@ -197,14 +244,16 @@ void gamma_index(int ndim, int* shape, double* first_matrix, double* second_matr
 	free(second_matrix_rel);
 }
 
+// Testing method
 int main() {
 	double mat1[] = { 1, 2, 6, 4};
 	double mat2[] = { 1, 6, 4.2, 7.5};
 	double* mat3 = (double*)malloc(sizeof(double) * 4);
 	int shape[] = { 2, 2};
-	gamma_index(2, shape, mat1, mat2, mat3, 1, 1);
+	gamma_index(2, shape, mat1, mat2, mat3, 2, 2);
 
 	for (int i = 0; i < 4; i++) {
 		printf("%f\n", mat3[i]);
 	}
+	free(mat3);
 }
