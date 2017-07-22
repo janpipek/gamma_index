@@ -94,7 +94,7 @@ def gamma_matrix_pass(rm, tm, dta=1.0, dd=0.05, ignore=lambda value: False):
             it.iternext()
             continue
 
-        slices = [ slice(max(0, index[i] - npoints), min(shape[i], index[i] + npoints + 1)) for i in xrange(ndim) ]
+        slices = [ slice(max(0, index[i] - npoints), min(shape[i], index[i] + npoints + 1)) for i in range(ndim) ]
         subtm = tm[slices]
 
         # Dose difference to every point (squared)

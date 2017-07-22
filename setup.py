@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 import itertools
+
+gamma_c = Extension('gamma', sources = ['gamma_index/gamma.c'])
 
 options = dict(
     name='gamma_index',
-    version='0.1.2',
+    version='0.1.3',
     packages=find_packages(),
     license='MIT',
     include_package_data = True,
@@ -13,6 +15,7 @@ options = dict(
     author='Jan Pipek',
     author_email='jan.pipek@gmail.com',
     url='https://github.com/janpipek/gamma_index',
-    install_requires = ['numpy', 'ctypes']
+    install_requires = ['numpy'],
+    ext_modules = [gamma_c]
 )
 setup(**options)
